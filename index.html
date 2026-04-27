@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Finder & Reader</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
+    input, button { padding: 12px; font-size: 16px; }
+    #results { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; margin-top: 20px; }
+    .book { border: 1px solid #ddd; padding: 10px; background: white; text-align: center; cursor: pointer; }
+    .book img { max-width: 150px; height: auto; }
+    #reader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; overflow: auto; }
+    #close { position: fixed; top: 10px; right: 10px; z-index: 1001; padding: 10px 20px; background: red; color: white; border: none; cursor: pointer; }
+    #epub-container { width: 90%; max-width: 800px; margin: 60px auto; height: 80vh; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Book Search & Reader (Anna's Archive)</h1>
+  <input type="text" id="query" placeholder="Enter book title or author" style="width: 60%;">
+  <button onclick="searchBooks()">Search</button>
+
+  <div id="results"></div>
+
+  <div id="reader">
+    <button id="close" onclick="closeReader()">Close Reader</button>
+    <div id="epub-container"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+  <script>
+    const corsProxy = 'https://corsproxy.io/?';  // Reliable public proxy
+
+    async function searchBooks() {
+      const q = document.getElementById('query').value.trim();
+      if (!q) return alert('Enter a search term');
+      
+      document.getElementById('results').innerHTML = '<p>Searching Anna\'s Archive...</p>';
+      
+      try {
+        // Search Anna's Archive via proxy (client-side scrape friendly)
+        const searchUrl = `https://annas-archive.org/search?q=${encodeURIComponent(q)}`;
+        const res = await fetch(corsProxy + encodeURIComponent(searchUrl));
+        const html = await res.text();
+        
+        // Simple regex parse for results (title, author, links, covers) - efficient for static
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const items = doc.querySelectorAll('.h-entry, .search-result'); // Adjust selectors based on current Anna layout
+        
+        let htmlOut = '';
+        items.forEach(item => {
+          const titleEl = item.querySelector('h3 a, .title');
+          const title = titleEl ? titleEl.textContent.trim() : 'Unknown';
+          const link = titleEl ? 'https://annas-archive.org' + titleEl.getAttribute('href') : '';
+          const cover = item.querySelector('img') ? item.querySelector('img').src : '';
+          
+          if (link) {
+            htmlOut += `
+              <div class="book" onclick="loadBook('\( {link}', ' \){title.replace(/'/g, "\\'")}')">
+                \( {cover ? `<img src=" \){cover}" alt="${title}">` : ''}
+                <h3>${title}</h3>
+              </div>`;
+          }
+        });
+        
+        document.getElementById('results').innerHTML = htmlOut || '<p>No results or proxy issue. Try again.</p>';
+      } catch (e) {
+        document.getElementById('results').innerHTML = `<p>Error: ${e.message}. Try different proxy or VPN if blocked.</p>`;
+      }
+    }
+
+    let currentBook = null;
+    async function loadBook(bookPageUrl, title) {
+      document.getElementById('reader').style.display = 'block';
+      document.getElementById('epub-container').innerHTML = `<h2>Loading ${title}...</h2>`;
+      
+      try {
+        // Fetch book detail page
+        const pageRes = await fetch(corsProxy + encodeURIComponent(bookPageUrl));
+        const pageHtml = await pageRes.text();
+        const pageDoc = new DOMParser().parseFromString(pageHtml, 'text/html');
+        
+        // Find direct download links (prioritize EPUB from LibGen mirrors)
+        const downloadLinks = Array.from(pageDoc.querySelectorAll('a')).filter(a => 
+          a.href.includes('lgli') || a.href.includes('libgen') || a.textContent.toLowerCase().includes('epub') || a.textContent.toLowerCase().includes('pdf')
+        );
+        
+        if (downloadLinks.length === 0) {
+          alert('No direct download found. Try another book.');
+          closeReader();
+          return;
+        }
+        
+        const dlUrl = downloadLinks[0].href.startsWith('http') ? downloadLinks[0].href : 'https://annas-archive.org' + downloadLinks[0].href;
+        
+        // Fetch file as blob
+        const fileRes = await fetch(corsProxy + encodeURIComponent(dlUrl));
+        const blob = await fileRes.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        
+        // Render with epub.js (works for EPUB; PDF fallback can use pdf.js if needed)
+        currentBook = ePub(objectUrl);
+        currentBook.ready.then(() => {
+          currentBook.renderTo('epub-container', { width: '100%', height: '100%' });
+        });
+      } catch (e) {
+        document.getElementById('epub-container').innerHTML = `<p>Load failed: ${e.message}. Some books may require direct visit.</p>`;
+      }
+    }
+
+    function closeReader() {
+      document.getElementById('reader').style.display = 'none';
+      if (currentBook) {
+        currentBook.destroy();
+        currentBook = null;
+      }
+      document.getElementById('epub-container').innerHTML = '';
+    }
+
+    // Optional: Press Enter to search
+    document.getElementById('query').addEventListener('keypress', e => { if (e.key === 'Enter') searchBooks(); });
+  </script>
+</body>
+</html>
