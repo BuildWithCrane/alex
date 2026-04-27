@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ALEXANDRIA // ARCHIVE</title>
-    
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22 fill=%22%23121212%22>📖</text></svg>">
     
     <style>
         :root {
             --concrete: #e0e0e0;
             --void: #121212;
-            --accent: #ffffff;
+            --paper: #ffffff;
             --ink-blue: #0047ab;
             --star-gold: #f1b51c;
+            --warning-red: #cc0000;
         }
 
         body {
@@ -22,9 +22,9 @@
             margin: 0;
             display: flex;
             min-height: 100vh;
+            color: var(--void);
         }
 
-        /* The Binding Side-Bar */
         .binding {
             width: 80px;
             background: var(--void);
@@ -32,277 +32,243 @@
             flex-direction: column;
             align-items: center;
             padding-top: 40px;
-            border-right: 2px solid var(--void);
             position: fixed;
             height: 100vh;
-            z-index: 1000;
+            z-index: 10000;
         }
 
         .binding-text {
             writing-mode: vertical-rl;
             text-transform: uppercase;
-            color: var(--accent);
+            color: white;
             font-weight: 900;
             letter-spacing: 10px;
             font-size: 24px;
             transform: rotate(180deg);
         }
 
-        /* Main Content Area */
-        .main-stage {
+        .workspace {
             flex-grow: 1;
             padding: 60px 60px 40px 140px;
-            max-width: 1300px;
-            display: flex;
-            flex-direction: column;
+            max-width: 1400px;
         }
 
         header {
             border-bottom: 10px solid var(--void);
-            margin-bottom: 50px;
+            margin-bottom: 40px;
             padding-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
         }
 
-        .title-block h1 {
-            font-family: Arial, sans-serif;
+        header h1 {
+            font-family: "Impact", sans-serif;
             font-size: 80px;
             font-weight: 900;
             margin: 0;
-            line-height: 0.8;
-            letter-spacing: -4px;
+            letter-spacing: -3px;
             text-transform: uppercase;
+            line-height: 0.9;
         }
 
-        .title-block p {
-            margin: 10px 0 0 5px;
-            font-style: italic;
-            font-size: 18px;
-            color: #444;
+        .status-strip {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            color: var(--ink-blue);
+            display: flex;
+            gap: 20px;
         }
 
-        .search-shelf {
-            margin-bottom: 60px;
-        }
+        .query-section { margin-bottom: 50px; }
 
-        .search-shelf input {
+        #searchBar {
             width: 100%;
             background: transparent;
             border: none;
             border-bottom: 4px solid var(--void);
             font-size: 32px;
-            font-family: "Georgia", serif;
             padding: 10px 0;
             outline: none;
+            font-family: "Georgia", serif;
         }
 
-        .stacks {
+        #results {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 40px;
-            flex-grow: 1;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 30px;
         }
 
         .folio-card {
-            background: var(--accent);
+            background: var(--paper);
             border: 1px solid #ccc;
-            padding: 20px;
-            box-shadow: 15px 15px 0px rgba(0,0,0,0.05);
-            transition: all 0.2s;
+            padding: 15px;
             cursor: pointer;
+            transition: all 0.2s;
             display: flex;
             flex-direction: column;
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.05);
         }
 
-        .folio-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 20px 20px 0px rgba(0,0,0,0.1);
-            border-color: var(--void);
-        }
-
-        .folio-cover {
+        .folio-card img {
             width: 100%;
-            height: 380px;
-            background: #eee;
+            aspect-ratio: 2/3;
             object-fit: cover;
             border: 1px solid #000;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            background: #eee;
         }
 
-        .folio-author {
-            font-size: 12px;
-            font-weight: 900;
-            text-transform: uppercase;
-            color: var(--ink-blue);
-            margin-bottom: 5px;
-        }
+        .folio-title { font-weight: bold; font-size: 15px; line-height: 1.2; height: 3.6em; overflow: hidden; }
 
-        .folio-title {
-            font-size: 20px;
-            font-weight: bold;
-            line-height: 1.2;
-            margin-bottom: 15px;
-        }
-
-        /* Minimal Footer */
-        footer {
-            margin-top: 60px;
-            padding: 10px 0;
-            display: flex;
-            justify-content: flex-start;
-        }
-
-        .registry-link {
-            text-decoration: none;
-            font-family: Arial, sans-serif;
-            font-size: 9px; /* Very small */
-            font-weight: bold;
-            letter-spacing: 1px;
-            color: #666;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: color 0.2s;
-        }
-
-        .registry-link:hover {
-            color: var(--void);
-        }
-
-        .star {
-            color: var(--star-gold);
-            font-size: 11px;
-        }
-
-        /* Reader Overlay */
-        #reader-overlay {
+        #reader {
             display: none;
             position: fixed;
-            top: 0; left: 80px; right: 0; bottom: 0;
+            top: 0; left: 80px; width: calc(100% - 80px);
+            height: 100%;
             background: #fff;
-            z-index: 2000;
+            z-index: 9999;
             flex-direction: column;
-            border-left: 2px solid var(--void);
         }
 
-        .reader-header {
+        #readerHeader {
             padding: 15px 30px;
             background: var(--void);
-            color: #fff;
+            color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .btn-close {
-            background: #cc0000;
-            color: #fff;
+        #closeBtn {
+            background: var(--warning-red);
             border: none;
+            color: white;
             padding: 8px 20px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        footer {
+            margin-top: 80px;
+            padding: 20px 0;
+            border-top: 1px solid #ccc;
+        }
+
+        .registry-tag {
             font-family: Arial, sans-serif;
-        }
-
-        iframe {
-            flex: 1;
-            border: none;
-        }
-
-        @media (max-width: 768px) {
-            .binding { display: none; }
-            .main-stage { padding: 30px; }
-            #reader-overlay { left: 0; }
+            font-size: 9px;
+            font-weight: bold;
+            color: #666;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
     </style>
 </head>
 <body>
 
-    <div class="binding">
-        <div class="binding-text">Alexandria</div>
-    </div>
+    <div class="binding"><div class="binding-text">Alexandria</div></div>
 
-    <div class="main-stage">
+    <div class="workspace">
         <header>
-            <div class="title-block">
-                <h1>Archive</h1>
-                <p>Knowledge is a common treasury.</p>
-            </div>
-            <div style="font-weight: bold; font-size: 14px; text-align: right;">
-                VOL. 2026<br>
-                INDEXED REPOSITORY
-            </div>
+            <h1>Archive</h1>
+            <p style="font-style: italic; margin: 10px 0 0 5px;">Knowledge is a common treasury.</p>
         </header>
 
-        <div class="search-shelf">
-            <input type="text" id="searchInput" placeholder="Search the repository..." onkeyup="if(event.key==='Enter')executeSearch()">
+        <div class="status-strip">
+            <span>Access: Decentralized Mirror Array</span>
+            <span style="color: green;">● Uplink Secured</span>
         </div>
 
-        <div id="stacks" class="stacks">
-            </div>
+        <div class="query-section">
+            <input type="text" id="searchBar" placeholder="Search the secure repository index..." onkeypress="if(event.key==='Enter') searchBooks()">
+        </div>
+
+        <div id="results"></div>
 
         <footer>
-            <a href="https://star.all4you.ru/" class="registry-link">
-                <span class="star">★</span>
-                VETTED BY ALL4YOU REGISTRY
+            <a href="https://star.all4you.ru/" class="registry-tag">
+                <span style="color:var(--star-gold)">★</span> VETTED BY ALL4YOU REGISTRY
             </a>
         </footer>
     </div>
 
-    <div id="reader-overlay">
-        <div class="reader-header">
-            <span id="current-title" style="font-size: 14px; text-transform: uppercase; font-weight: bold;">Document Viewer</span>
-            <button class="btn-close" onclick="closeReader()">CLOSE VIEW</button>
+    <div id="reader">
+        <div id="readerHeader">
+            <span id="bookTitle" style="font-family: Arial; font-weight: bold; text-transform: uppercase; font-size: 11px;">Deciphering Record</span>
+            <button id="closeBtn" onclick="closeReader()">Terminate View</button>
         </div>
-        <iframe id="reader-frame"></iframe>
+        <div id="epubContainer" style="flex: 1;"></div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
     <script>
-        async function executeSearch() {
-            const query = document.getElementById('searchInput').value;
-            const container = document.getElementById('stacks');
-            if(!query) return;
+        let rendition = null;
+        // Obscured Node List
+        const nodes = ['https://annas-archive.gl', 'https://annas-archive.li', 'https://annas-archive.se'];
+        const pxy = 'https://corsproxy.io/?';
 
-            container.innerHTML = "<p>Accessing records...</p>";
+        async function searchBooks() {
+            const q = document.getElementById('searchBar').value.trim();
+            if (!q) return;
+            const resDiv = document.getElementById('results');
+            resDiv.innerHTML = "<p>QUERYING ARCHIVAL NODES...</p>";
 
             try {
-                const response = await fetch(`https://gutendex.com/books/?search=${encodeURIComponent(query)}`);
-                const data = await response.json();
-                container.innerHTML = "";
+                const response = await fetch(pxy + encodeURIComponent(`${nodes[0]}/search?q=${q}`));
+                const html = await response.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const items = doc.querySelectorAll('a[href*="/md5/"]');
+                let out = '';
 
-                data.results.forEach(book => {
-                    const htmlUrl = book.formats['text/html'] || book.formats['text/html; charset=utf-8'];
-                    if (htmlUrl) {
-                        const card = document.createElement('div');
-                        card.className = 'folio-card';
-                        card.onclick = () => openReader(htmlUrl, book.title);
-                        
-                        const coverUrl = `https://www.gutenberg.org/cache/epub/${book.id}/pg${book.id}.cover.medium.jpg`;
-                        
-                        card.innerHTML = `
-                            <img src="${coverUrl}" class="folio-cover" onerror="this.src='https://via.placeholder.com/300x450?text=No+Cover+Found'">
-                            <span class="folio-author">${book.authors[0]?.name || 'UNKNOWN'}</span>
-                            <span class="folio-title">${book.title}</span>
-                        `;
-                        container.appendChild(card);
-                    }
+                items.forEach(item => {
+                    const title = item.querySelector('h3')?.textContent || "Classified Record";
+                    const img = item.querySelector('img')?.src || '';
+                    const path = item.getAttribute('href');
+                    const link = path.startsWith('http') ? path : nodes[0] + path;
+
+                    out += `
+                        <div class="folio-card" onclick="loadAndRead('${link}', '${title.replace(/'/g, "\\'")}')">
+                            <img src="${img}" onerror="this.style.display='none'">
+                            <span class="folio-title">${title}</span>
+                            <div style="font-size: 9px; font-weight: bold; color: var(--ink-blue); margin-top:5px;">RETRIEVAL: READY</div>
+                        </div>`;
                 });
-            } catch (e) {
-                container.innerHTML = "<p>Archive connection timeout.</p>";
-            }
+                resDiv.innerHTML = out || "<p>NO RECORDS FOUND.</p>";
+            } catch (e) { resDiv.innerHTML = "<p>NODE CONNECTION FAILURE.</p>"; }
         }
 
-        function openReader(url, title) {
-            document.getElementById('current-title').innerText = title;
-            document.getElementById('reader-frame').src = url;
-            document.getElementById('reader-overlay').style.display = 'flex';
+        async function loadAndRead(url, title) {
+            document.getElementById('reader').style.display = 'flex';
+            document.getElementById('bookTitle').textContent = `DECIPHERING: ${title}`;
+            const container = document.getElementById('epubContainer');
+            container.innerHTML = `<p style="text-align:center; padding-top: 100px;">ESTABLISHING ENCRYPTED STREAM...</p>`;
+
+            try {
+                const html = await (await fetch(pxy + encodeURIComponent(url))).text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                let target = null;
+                doc.querySelectorAll('a').forEach(a => {
+                    if (a.href.includes('epub') || a.textContent.toLowerCase().includes('epub')) {
+                        target = a.href.startsWith('http') ? a.href : nodes[0] + a.href;
+                    }
+                });
+
+                if (!target) throw new Error("STREAM UNAVAILABLE");
+                const book = ePub(pxy + encodeURIComponent(target));
+                if (rendition) rendition.destroy();
+                rendition = book.renderTo("epubContainer", { width: "100%", height: "100%", flow: "paginated" });
+                book.ready.then(() => { container.innerHTML = ''; rendition.display(); });
+            } catch (e) { container.innerHTML = `<p style="text-align:center; padding: 50px; color: var(--warning-red);">SYSTEM ERROR: ${e.message}</p>`; }
         }
 
         function closeReader() {
-            document.getElementById('reader-overlay').style.display = 'none';
-            document.getElementById('reader-frame').src = '';
+            if (rendition) rendition.destroy();
+            document.getElementById('reader').style.display = 'none';
         }
     </script>
 </body>
